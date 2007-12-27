@@ -1,0 +1,23 @@
+Quick and dirty readme.
+
+A WRP file is a 512 byte header + romfs payload + 512 byte zero padding.
+
+The WRP header contains three important fields that need to be modified when 
+rebuilding a firmware. They are 
+
+* An MD5 sum of the whole image with space for the sum to be inserted, filled 
+with zeros. 
+
+* The length of the romfs image.
+
+* An MD5 sum of the romfs image.
+
+I decided to make this little loader after forgetting to adjust the length
+field and almost bricking my unit.
+
+I've only tested it on my PPC Mac but it seems to work well with my S1.
+
+Enjoy.
+
+	Eric - efry78@gmail.com
+
