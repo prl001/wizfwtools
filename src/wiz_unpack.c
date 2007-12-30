@@ -183,7 +183,13 @@ static int recurse(void *mem, unsigned int offset, const char *dir)
 			chmod(ni.name, mode);
 			break;
 		case ROMFH_LNK:
-			printf("symbolic link\n");
+			printf("symbolic link: %s\n", (char*)ni.file);
+			if(symlink((char*)ni.file, ni.name) < 0) {
+				fprintf(stderr, "can't link `%s' to `%s': %s\n",
+					ni.name, (char*)ni.file,
+					strerror(errno));
+				return -1;
+			}
 			break;
 		case ROMFH_BLK:
 			printf("block device\n");
