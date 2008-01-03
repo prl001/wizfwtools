@@ -9,6 +9,7 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <unistd.h>
+#include <ctype.h>
 
 #include "md5.c"
 #include "hdr.h"
@@ -29,9 +30,46 @@ const unsigned char H1_magic[] = { 0x3c, 0x7e, 0x22, 0x00, 0x00, 0x00, 0x08, 0x0
 typedef struct {
 unsigned char *wrpbuf;
 long image_length;
-char machine_type;
+unsigned char machine_type[8];
 char version_string[0x40];
 } wrp;
+
+unsigned char parse_hex_char(unsigned char c)
+{
+  c = toupper(c);
+  if( (c < 0x30 || c > 0x46) || (c > 0x39 && c < 0x41) )
+   return 15; //invalid character. must be 0-9A-F
+
+  c -= 0x30;
+   
+  if(c >= 0x9) //A-F
+    c -= 0x7;
+	
+ return c;
+}
+
+int parse_machine_type(char *arg, unsigned char *machine_type_buf)
+{
+ int i;
+ char c;
+ if(strlen(arg) != 16)
+  return 0;
+ 
+ for(i=0;i<8;i++)
+ {
+  c = parse_hex_char(arg[i*2]);
+  if(c > 15)
+   	return 0;
+  machine_type_buf[i] = c<<4;
+
+  c = parse_hex_char(arg[i*2+1]);
+  if(c > 15)
+   	return 0;
+  machine_type_buf[i] += c;
+ }
+
+ return 1;
+}
 
 int build_wrp(char *imagefile, wrp *w)
 {
@@ -55,13 +93,15 @@ int build_wrp(char *imagefile, wrp *w)
  strncpy(&((char *)w->wrpbuf)[OFFSET_VERSION_STRING], w->version_string, MAX_VERSION_STRING_LENGTH);
  
  //write machine magic
+ memcpy(&w->wrpbuf[OFFSET_MACHINE_MAGIC], w->machine_type, 0x8);
+ /*
  switch(w->machine_type)
  {
 	case 's' : memcpy(&w->wrpbuf[OFFSET_MACHINE_MAGIC], S1_magic, 0x8); break;
 	case 'p' : memcpy(&w->wrpbuf[OFFSET_MACHINE_MAGIC], P1_magic, 0x8); break;
 	case 'h' : memcpy(&w->wrpbuf[OFFSET_MACHINE_MAGIC], H1_magic, 0x8); break;
  }
- 
+ */
  memset(&w->wrpbuf[OFFSET_MD5_FILE], 0, 0x10);
  memset(&w->wrpbuf[OFFSET_IMAGE_LENGTH], 0, 0x4);
  memset(&w->wrpbuf[OFFSET_MD5_IMAGE], 0, 0x10);
@@ -94,11 +134,12 @@ int build_wrp(char *imagefile, wrp *w)
 }
 void usage(char *filename)
 {
- printf("\nUsage: %s [-t machine_type] [-V version_string] [-h] -i infile -o outfile\n", filename);
- printf("-t    machine_type.   Either s, p or h. Default: s, [DP-S1]\n");
- printf("-V    version_string. Max 64 characters. Default: \"wiz_pack\"\n");
- printf("-i    infile.         Input romfs filename\n");
- printf("-o    outfile.        Output wrp firmware filename\n");
+ printf("\nUsage: %s [-t machine_type] [-T machine_type_hex_string] [-V version_string] [-h] -i infile -o outfile\n", filename);
+ printf("-t    machine_type.         Either s, p or h. Default: s, [DP-S1]\n");
+ printf("-T    custom machine_type.  Enter a 16 character machine code. eg. \"3ebe200e00000808\" for the DP-S1 \n");
+ printf("-V    version_string.       Max 64 characters. Default: \"wiz_pack\"\n");
+ printf("-i    infile.               Input romfs filename\n");
+ printf("-o    outfile.              Output wrp firmware filename\n");
  printf("-h    Print this help.\n\n");
  
 }
@@ -111,10 +152,12 @@ int main(int argc, char *argv[])
  char *romfsfile = NULL;
  int c;
  
- w.machine_type = 's';
+ //clear machine_type
+ memset(w.machine_type, 0, 0x8);
+ 
  strcpy(w.version_string, "wiz_pack");
  
- while((c = getopt(argc, argv, "t:i:o:V:h")) != EOF)
+ while((c = getopt(argc, argv, "T:t:i:o:V:h")) != EOF)
  {
 	switch(c)
 	{
@@ -132,15 +175,23 @@ int main(int argc, char *argv[])
 			}
 			switch(optarg[0])
 			{
-				case 's' :
-				case 'h' :
-				case 'p' : w.machine_type = optarg[0];
+				case 's' : memcpy(w.machine_type, S1_magic, 0x8); break;
+				case 'h' : memcpy(w.machine_type, H1_magic, 0x8); break;
+				case 'p' : memcpy(w.machine_type, P1_magic, 0x8); break;
 					break;
 				default : printf("\nError: Unknown machine type!\n");
 					usage(argv[0]);
 					exit(1);
 					break;
 			}
+			break;
+		case 'T' : if(parse_machine_type(optarg, w.machine_type) == 0)
+					{
+						printf("\nError: Invalid custom machine type!\n");
+						usage(argv[0]);
+						exit(1);
+						break;
+					}
 			break;
 		case 'V' : strncpy(w.version_string, optarg, MAX_VERSION_STRING_LENGTH);
 			break;
