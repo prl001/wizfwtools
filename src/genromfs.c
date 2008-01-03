@@ -692,7 +692,7 @@ int processdir(int level, const char *base, const char *dirname, struct stat *sb
 
 void showhelp(const char *argv0)
 {
-	printf("genromfs %s\n",VERSION);
+	printf("genromfs \n");
 	printf("Usage: %s [OPTIONS] -f IMAGE\n",argv0);
 	printf("Create a romfs filesystem image from a directory\n");
 	printf("\n");
@@ -725,6 +725,9 @@ int main(int argc, char *argv[])
 	struct aligns *pa, *pa2;
 	struct excludes *pe, *pe2;
 	FILE *f;
+#ifdef WIN32
+	case_insensitive_mode = 1; // We hardcode this for the Windows platform.
+#endif
 
 	while ((c = getopt(argc, argv, "V:vd:f:ha:A:x:i")) != EOF) {
 		switch(c) {

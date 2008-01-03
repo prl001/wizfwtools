@@ -240,7 +240,7 @@ static int extract_from_mem(void *mem, unsigned int len, const char *dir)
 	//ri.checksum = htonl(0x55555555);
 	//
 	parse_node(mem, offset, &ni);
-	printf("+= %u + %u\n", sizeof(struct romfh), ni.namelen);
+	printf("+= %lu + %u\n", sizeof(struct romfh), ni.namelen);
 	offset += sizeof(struct romfh) + ni.namelen;
 
 	printf("romfs image name: `%s'\n", ni.name);
@@ -325,10 +325,13 @@ int main(int argc, char **argv)
 {
 	int c;
 	char *outdir = NULL;
-	char basedir[2048+1];
 	struct stat s;
 	
 	cmdname = argv[0];
+
+#ifdef WIN32
+	case_insensitive_mode = 1; // We hard code this for the Windows platform.
+#endif
 
 	while ((c = getopt(argc, argv, "x:hiV")) != EOF) {
 		switch (c) {
