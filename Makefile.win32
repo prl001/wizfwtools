@@ -1,7 +1,7 @@
 CC=gcc
 CFLAGS=-g -Wall -DWIN32 -c
 
-all: wiz_unpack.exe genromfs.exe wiz_pack.exe
+all: wiz_unpack.exe wiz_genromfs.exe wiz_pack.exe
 
 wiz_unpack.exe: src/wiz_unpack.o
 	$(CC) $< -o $@
@@ -9,7 +9,7 @@ wiz_unpack.exe: src/wiz_unpack.o
 src/wiz_unpack.o: src/wiz_unpack.c
 	$(CC) $(CFLAGS) $< -o $@
 
-genromfs.exe: src/genromfs.o
+wiz_genromfs.exe: src/genromfs.o
 	$(CC) $< -o $@
 
 src/genromfs.o: src/genromfs.c
@@ -22,4 +22,4 @@ src/wiz_pack/wiz_pack.o: src/wiz_pack/wiz_pack.c src/wiz_pack/md5.c src/wiz_pack
 	$(CC) $(CFLAGS) -I src/wiz_pack src/wiz_pack/wiz_pack.c -o $@
 
 clean:
-	rm -r src/*.o src/wiz_pack/*.o wiz_unpack.exe genromfs.exe wiz_pack.exe
+	rm -r src/*.o src/wiz_pack/*.o wiz_unpack.exe wiz_genromfs.exe wiz_pack.exe
