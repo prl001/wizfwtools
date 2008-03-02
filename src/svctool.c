@@ -60,7 +60,7 @@ u32 read_u32(FILE *fp)
 	return i;
 }
 
-void read_svn(const char *filename)
+int read_svn(const char *filename)
 {
 	FILE *fp;
 	int n,i,svc_name_len, rf_name_len;
@@ -77,7 +77,7 @@ void read_svn(const char *filename)
 	
 	fp = fopen(filename, "r");
 	if(fp == NULL)
-		return;
+		return 0;
 
 //u32 start magic 90 BE 00 10
 //u32 number of segments
@@ -150,11 +150,11 @@ void read_svn(const char *filename)
 	for(i=0;i < rf_count && !feof(fp);i++)
 	{
 		rf_ptr->unk1 = read_u16(fp);
-		rf_ptr->unk2 = read_u16(fp);		
+		rf_ptr->unk2 = read_u16(fp);
 		rf_ptr->rf = read_u32(fp);
 		rf_ptr->onid = read_u16(fp);
 		rf_ptr->tsid = read_u16(fp);
-		
+
 		rf_ptr++;
 	}
 
@@ -191,6 +191,14 @@ void read_svn(const char *filename)
 	free(names);
 	fclose(fp);
 
+	return 1;
+}
+
+void print_usage(char *filename)
+{
+	printf("Usage: %s [filename]\n",filename);
+	printf("If filename isn't specified then 'svc.dat' is used.\n");
+
 	return;
 }
 
@@ -201,5 +209,12 @@ int main(int argc, char *argv[])
 	if(argc > 1)
 		filename = argv[1];
 
-	read_svn(filename);
+	if(read_svn(filename) == 0)
+	{
+		printf("Error: Opening '%s'\n", filename);
+		print_usage(argv[0]);
+		return 1;
+	}
+
+	return 0;
 }
