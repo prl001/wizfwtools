@@ -581,8 +581,10 @@ int processdir(int level, const char *base, const char *dirname, struct stat *sb
 			freenode(n); continue;
 		}
 
-		/* strip 000_ from files/directories */
-		if(case_insensitive_mode)
+		/* strip 000_ from files/directories except '.' and '..' */
+		if (case_insensitive_mode &&
+		    (strcmp(dp->d_name, ".") != 0
+		     && strcmp(dp->d_name, "..") != 0))
 		{
 			if(n->name[3] == 'x') // "001x_filename" If marked as executable then force exe permission.
 				sb->st_mode |= S_IXUSR;
