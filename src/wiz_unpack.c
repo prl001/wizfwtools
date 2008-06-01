@@ -57,6 +57,7 @@ struct node_info {
 };
 
 static int case_insensitive_mode = 0;
+static int quiet = 0;
 
 static int parse_node(void *start, unsigned int offset, struct node_info *ni)
 {
@@ -121,27 +122,30 @@ static int recurse(void *mem, unsigned int offset, const char *dir)
 	struct node_info ni;
 
 	while (1) {
-		printf("==========================\n");
-		printf("parse_node(%u/0x%x)\n", offset, offset);
+		if(!quiet) printf("==========================\n");
+		if(!quiet) printf("parse_node(%u/0x%x)\n", offset, offset);
 		parse_node(mem, offset, &ni);
-		printf("%s: ", ni.name);
+		if(!quiet) printf("%s: ", ni.name);
 
 		switch (ni.mode & ~ROMFH_EXEC) {
 		case ROMFH_HRD:
-			printf("hard link\n");
+			if(!quiet) printf("hard link\n");
 			if (ni.size)
 				fprintf(stderr, "nonstandard size `%u'\n",
 					ni.size);
 			break;
 		case ROMFH_DIR:
-			printf("directory\n");
+			if(!quiet) printf("directory\n");
 			if (ni.size)
 				fprintf(stderr, "nonstandard size `%u'\n",
 					ni.size);
-			if (case_insensitive_mode && (!strcmp(&ni.name[5], "..") || !strcmp(&ni.name[5], ".")) ||
-				(!strcmp(ni.name, "..") || !strcmp(ni.name, ".")))
+			if ((case_insensitive_mode
+			        && (!strcmp(&ni.name[5], "..")
+				    || !strcmp(&ni.name[5], ".")))
+				|| (!strcmp(ni.name, "..")
+				|| !strcmp(ni.name, ".")))
 			 {
-				fprintf(stderr, "name invalid!!\n");
+				if(!quiet) fprintf(stderr, "name invalid!!\n");
 				break;
 			}
 			if (mkdir(ni.name, 0750) < 0) {
@@ -159,7 +163,7 @@ static int recurse(void *mem, unsigned int offset, const char *dir)
 			}
 			break;
 		case ROMFH_REG:
-			printf("regular file\n");
+			if(!quiet) printf("regular file\n");
 			mode = 0640;
 			if (ni.mode & ROMFH_EXEC)
 				mode |= 0110;
@@ -183,7 +187,7 @@ static int recurse(void *mem, unsigned int offset, const char *dir)
 			chmod(ni.name, mode);
 			break;
 		case ROMFH_LNK:
-			printf("symbolic link: %s\n", (char*)ni.file);
+			if(!quiet) printf("symbolic link: %s\n", (char*)ni.file);
 			if(symlink((char*)ni.file, ni.name) < 0) {
 				fprintf(stderr, "can't link `%s' to `%s': %s\n",
 					ni.name, (char*)ni.file,
@@ -192,25 +196,25 @@ static int recurse(void *mem, unsigned int offset, const char *dir)
 			}
 			break;
 		case ROMFH_BLK:
-			printf("block device\n");
+			if(!quiet) printf("block device\n");
 			if (ni.size)
 				fprintf(stderr, "nonstandard size `%u'\n",
 					ni.size);
 			break;
 		case ROMFH_CHR:
-			printf("character device\n");
+			if(!quiet) printf("character device\n");
 			if (ni.size)
 				fprintf(stderr, "nonstandard size `%u'\n",
 					ni.size);
 			break;
 		case ROMFH_SCK:
-			printf("socket\n");
+			if(!quiet) printf("socket\n");
 			if (ni.size)
 				fprintf(stderr, "nonstandard size `%u'\n",
 					ni.size);
 			break;
 		case ROMFH_FIF:
-			printf("fifo\n");
+			if(!quiet) printf("fifo\n");
 			if (ni.size)
 				fprintf(stderr, "nonstandard size `%u'\n",
 					ni.size);
@@ -220,7 +224,7 @@ static int recurse(void *mem, unsigned int offset, const char *dir)
 		if (!ni.nextfh)
 			return 1;
 
-		printf("nextfh=%u\n", ni.nextfh);
+		if(!quiet) printf("nextfh=%u\n", ni.nextfh);
 
 		offset = ni.nextfh;
 		//curmem += ni.nextfh;
@@ -240,7 +244,6 @@ static int extract_from_mem(void *mem, unsigned int len, const char *dir)
 	//ri.checksum = htonl(0x55555555);
 	//
 	parse_node(mem, offset, &ni);
-	printf("+= %lu + %u\n", sizeof(struct romfh), ni.namelen);
 	offset += sizeof(struct romfh) + ni.namelen;
 
 	printf("romfs image name: `%s'\n", ni.name);
@@ -317,6 +320,7 @@ static void usage(void)
 	fprintf(stderr, "Options:\n");
 	fprintf(stderr, "-i           Case in-sensitive mode. (prepend nnn_ to all files/directories)\n");	
 	fprintf(stderr, "-x outdir    Expand firmware romfs image into directory/\n");
+	fprintf(stderr, "-q           Quiet; don't list the image contents\n");
 	fprintf(stderr, "-V           Print version and exit\n");
 	fprintf(stderr, "-h           Print this usage and exit\n\n");
 }
@@ -333,10 +337,13 @@ int main(int argc, char **argv)
 	case_insensitive_mode = 1; // We hard code this for the Windows platform.
 #endif
 
-	while ((c = getopt(argc, argv, "x:hiV")) != EOF) {
+	while ((c = getopt(argc, argv, "x:hiqV")) != EOF) {
 		switch (c) {
 		case 'i':
 			case_insensitive_mode = 1;
+			break;
+		case 'q':
+			quiet = 1;
 			break;
 		case 'x':
 			outdir = optarg;

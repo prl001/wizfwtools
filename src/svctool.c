@@ -342,7 +342,7 @@ int svc_rename_ch(SVC *svc, int onid, int tsid, int svcid, const char *new_name)
 	for(i=0; i < svc->num_channels; i++)
 	{
 		if(i==ch_idx)
-			name = new_name;
+			name = (unsigned char*)new_name;
 		else
 			name = &svc->ch_names[svc->ch[i].name_offset];
 
@@ -351,8 +351,8 @@ int svc_rename_ch(SVC *svc, int onid, int tsid, int svcid, const char *new_name)
 		//Don't save a name for empty records.
 		if(svc->ch[i].flag != SVC_FLAG_EMPTY)
 		{
-			strcpy((char *)name_ptr, name);
-			name_ptr += strlen(name) + 1;
+			strcpy((char *)name_ptr, (char *)name);
+			name_ptr += strlen((char *)name) + 1;
 		}
 
 	}

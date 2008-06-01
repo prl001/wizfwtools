@@ -1,8 +1,9 @@
 CC=gcc
 CFLAGS=-g -Wall -c
 PREFIX=/usr/local
+TARGETS=wiz_unpack wiz_pack wiz_genromfs wiz_svctool
 
-all: wiz_unpack wiz_genromfs wiz_pack wiz_svctool
+all: $(TARGETS)
 
 wiz_svctool: src/svctool.o
 	$(CC) $< -o $@
@@ -21,12 +22,15 @@ src/genromfs.o: src/genromfs.c
 
 wiz_pack: src/wiz_pack/wiz_pack.o
 	$(CC) $< -o $@
-	
+
 src/wiz_pack/wiz_pack.o: src/wiz_pack/wiz_pack.c src/wiz_pack/md5.c src/wiz_pack/md5.h src/wiz_pack/hdr.h
 	$(CC) $(CFLAGS) -I src/wiz_pack src/wiz_pack/wiz_pack.c -o $@
 
 install: all
-	cp wiz_unpack wiz_pack wiz_genromfs wiz_svctool $(PREFIX)/bin
+	cp $(TARGETS) '$(PREFIX)/bin'
+	@for i in $(TARGETS); do \
+		chmod a+rx '$(PREFIX)/bin'/$$i \
+	done
 
 clean:
-	rm -r src/*.o src/wiz_pack/*.o wiz_unpack wiz_genromfs wiz_pack wiz_svctool
+	rm -f src/*.o src/wiz_pack/*.o $(TARGETS)

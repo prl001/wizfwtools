@@ -561,6 +561,7 @@ int processdir(int level, const char *base, const char *dirname, struct stat *sb
 	dirfd = opendir(dir->realname);
 	if (dirfd == NULL) {
 		perror(dir->realname);
+		exit(1);
 	}
 	while(dirfd && (dp = readdir(dirfd))) {
 		/* don't process main . and .. twice */
