@@ -29,7 +29,7 @@ src/wiz_pack/wiz_pack.o: src/wiz_pack/wiz_pack.c src/wiz_pack/md5.c src/wiz_pack
 install: all
 	cp $(TARGETS) '$(PREFIX)/bin'
 	@for i in $(TARGETS); do \
-		chmod a+rx '$(PREFIX)/bin'/$$i \
+		chmod a+rx '$(PREFIX)/bin'/$$i; \
 	done
 
 clean:
