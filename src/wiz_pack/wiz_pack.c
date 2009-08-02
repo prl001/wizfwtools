@@ -31,6 +31,10 @@ const char DP_P1_magic[] = "0808 0000 0A22 BE3C";
 const char DP_P2_magic[] = "0908 0000 0A22 9E3C";
 const char DP_H1_magic[] = "0408 0000 0022 7E3C";
 
+/* Australian Freeview terrestrial models */
+
+const char FV_L1_magic[] = "0808 0002 0A22 9E3C";
+
 /* Finnish terrestrial models */
 
 const char FT_P1_magic[] = "0808 0000 0E20 BE3E"; /* not confirmed */
@@ -58,6 +62,8 @@ const magic_ent magic_ents[] = {
     { "DPP2",  DP_P2_magic, none       },
     { "DP-H1", DP_H1_magic, none       },
     { "DPH1",  DP_H1_magic, none       },
+    { "FV-L1", FV_L1_magic, none       },
+    { "FVL1",  FV_L1_magic, none       },
     { "FC-P1", FC_P1_magic, none       },
     { "FCP1",  FC_P1_magic, none       },
     { "FC-H1", FC_H1_magic, none       },
