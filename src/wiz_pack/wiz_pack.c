@@ -26,24 +26,25 @@
 
 /* Australian terrestrial models */
 
-const char DP_S1_magic[] = "0808 0000 0E20 BE3E";
-const char DP_P1_magic[] = "0808 0000 0A22 BE3C";
-const char DP_P2_magic[] = "0908 0000 0A22 9E3C";
-const char DP_H1_magic[] = "0408 0000 0022 7E3C";
+const char DP_S1_magic[]   = "0808 0000 0E20 BE3E";
+const char DP_P1_magic[]   = "0808 0000 0A22 BE3C";
+const char DP_P2_magic[]   = "0908 0000 0A22 9E3C";
+const char DP_Lite_magic[] = "0808 0000 0002 9E3C";
+const char DP_H1_magic[]   = "0408 0000 0022 7E3C";
 
 /* Australian Freeview terrestrial models */
 
-const char FV_L1_magic[] = "0808 0002 0A22 9E3C";
+const char FV_L1_magic[]   = "0808 0002 0A22 9E3C";
 
 /* Finnish terrestrial models */
 
-const char FT_P1_magic[] = "0808 0000 0E20 BE3E"; /* not confirmed */
-const char FT_H1_magic[] = "0808 0000 0A22 BE3C"; /* not confirmed */ 
+const char FT_P1_magic[]   = "0808 0000 0E20 BE3E"; /* not confirmed */
+const char FT_H1_magic[]   = "0808 0000 0A22 BE3C"; /* not confirmed */ 
 
 /* Finnish cable models */
 
-const char FC_P1_magic[] = "0808 0000 0A22 BE3C"; /* not confirmed */
-const char FC_H1_magic[] = "0408 0000 0022 7E3C"; /* not confirmed */ 
+const char FC_P1_magic[]   = "0808 0000 0A22 BE3C"; /* not confirmed */
+const char FC_H1_magic[]   = "0408 0000 0022 7E3C"; /* not confirmed */ 
 
 enum magic_flags { none = 0, deprecated = (1<<0) };
 
@@ -54,28 +55,30 @@ typedef struct {
 } magic_ent;
 
 const magic_ent magic_ents[] = {
-    { "DP-S1", DP_S1_magic, none       }, // Entry [0] is the default!
-    { "DPS1",  DP_S1_magic, none       },
-    { "DP-P1", DP_P1_magic, none       },
-    { "DPP1",  DP_P1_magic, none       },
-    { "DP-P2", DP_P2_magic, none       },
-    { "DPP2",  DP_P2_magic, none       },
-    { "DP-H1", DP_H1_magic, none       },
-    { "DPH1",  DP_H1_magic, none       },
-    { "FV-L1", FV_L1_magic, none       },
-    { "FVL1",  FV_L1_magic, none       },
-    { "FC-P1", FC_P1_magic, none       },
-    { "FCP1",  FC_P1_magic, none       },
-    { "FC-H1", FC_H1_magic, none       },
-    { "FCH1",  FC_H1_magic, none       },
-    { "FT-P1", FT_P1_magic, none       },
-    { "FTP1",  FT_P1_magic, none       },
-    { "FT-H1", FT_H1_magic, none       },
-    { "FTH1",  FT_H1_magic, none       },
-    { "H",     DP_H1_magic, deprecated },
-    { "P",     DP_P1_magic, deprecated },
-    { "S",     DP_S1_magic, deprecated },
-    { NULL,   NULL,         none       },
+    { "DP-S1",   DP_S1_magic,   none       }, // Entry [0] is the default!
+    { "DPS1",    DP_S1_magic,   none       },
+    { "DP-P1",   DP_P1_magic,   none       },
+    { "DPP1",    DP_P1_magic,   none       },
+    { "DP-P2",   DP_P2_magic,   none       },
+    { "DPP2",    DP_P2_magic,   none       },
+    { "DP-H1",   DP_H1_magic,   none       },
+    { "DPH1",    DP_H1_magic,   none       },
+    { "FV-L1",   FV_L1_magic,   none       },
+    { "FVL1",    FV_L1_magic,   none       },
+    { "FC-P1",   FC_P1_magic,   none       },
+    { "FCP1",    FC_P1_magic,   none       },
+    { "FC-H1",   FC_H1_magic,   none       },
+    { "FCH1",    FC_H1_magic,   none       },
+    { "FT-P1",   FT_P1_magic,   none       },
+    { "FTP1",    FT_P1_magic,   none       },
+    { "FT-H1",   FT_H1_magic,   none       },
+    { "FTH1",    FT_H1_magic,   none       },
+    { "DP-Lite", DP_Lite_magic, none       },
+    { "DPLite",  DP_Lite_magic, none       },
+    { "H",       DP_H1_magic,   deprecated },
+    { "P",       DP_P1_magic,   deprecated },
+    { "S",       DP_S1_magic,   deprecated },
+    { NULL,      NULL,          none       },
 };
 
 typedef struct {
@@ -191,24 +194,41 @@ int build_wrp(char *imagefile, wrp *w)
     return 1; 
 }
 
-void print_valid_magics()
+void print_valid_magics(char *indent)
 {
     magic_ent const* m_ent;
+    magic_ent const* m_last = NULL;
+    for(m_ent = magic_ents; m_ent->name; m_ent++) {
+	if(!(m_ent->flags & deprecated))
+	    m_last = m_ent;
+    }
+    int pos = 0;
+    int indent_len = strlen(indent) + 1;
     for(m_ent = magic_ents; m_ent->name; m_ent++) {
 	if(!(m_ent->flags & deprecated)) {
-            printf("%s%s", (m_ent == magic_ents ? "" : ", "), m_ent->name);
+	    if(pos == 0) {
+		printf("%s", indent);
+		pos = indent_len;
+	    }
+	    pos += strlen(m_ent->name) + (m_ent == m_last ? 0 : 2);
+            printf("%s%s", m_ent->name, (m_ent == m_last ? "" : ", "));
+	    if(pos >= 72) {
+	        pos = 0;
+		printf("\n");
+	    }
 	}
     }
+    if(pos != 0)
+	printf("\n");
 }
 
 void usage(char *filename)
 {
     printf("\nUsage: %s [-t machine_type] [-T machine_type_hex_string] [-V version_string] [-h] -i infile -o outfile\n", filename);
     printf("-t    machine_type.         Default: DP-S1\n");
-    printf("                            ");
-    print_valid_magics();
-    printf("\n");
-    printf("-T    custom machine_type.  Enter a 16 character machine code. eg. \"080800000e20be3e\" for the DP-S1 \n");
+    print_valid_magics("                            ");
+    printf("-T    custom machine_type.  Enter a 16 character machine code.\n");
+    printf("                            eg. \"080800000e20be3e\" for the DP-S1 \n");
     printf("-V    version_string.       Max 64 characters. Default: \"wiz_pack\"\n");
     printf("-i    infile.               Input romfs filename\n");
     printf("-o    outfile.              Output wrp firmware filename\n");
@@ -247,10 +267,10 @@ int main(int argc, char *argv[])
 		    break;
 		}
 		if(m_ent->flags & deprecated) {
-		    printf("Machine type code \"%s\" deprecated\n", optarg);
-		    printf("Codes: ");
-		    print_valid_magics();
-		    printf("\nare preferred\n");
+		    printf("Machine type code \"%s\" is deprecated\n", optarg);
+		    printf("Codes:\n");
+		    print_valid_magics("        ");
+		    printf("are preferred\n");
 		}
 		machine_magic = m_ent->magic;
 		break;
